@@ -12,25 +12,25 @@
 #define LOGI(info,...)  \
 do{ \
     if(DEBUG_LEVEL>=INFO_OUTPUT){\
-        printf("[Info] %s,%s,%d:"info"",__FILE__,__FUNCTION__,__LINE__,##__VA_ARGS__);}\
+        printf("[Info] %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
 }while(0)
 
 #define LOGW(info,...)  \
 do{ \
     if(DEBUG_LEVEL>=WARNING_OUTPUT){\
-        printf("[Warning] %s,%s,%d:"info"",__FILE__,__FUNCTION__,__LINE__,##__VA_ARGS__);}\
+        printf("[Warning] %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
 }while(0)
 
 #define LOGD(info,...)  \
 do{ \
     if(DEBUG_LEVEL>=DEBUG_OUTPUT){\
-        printf("[Debug] %s,%s,%d:"info"",__FILE__,__FUNCTION__,__LINE__,##__VA_ARGS__);}\
+        printf("[Debug] %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
 }while(0)
 
 #define LOGE(info,...)  \
 do{ \
     if(DEBUG_LEVEL>=ERROR_OUTPUT){\
-        printf("[Error] %s,%s,%d:"info"",__FILE__,__FUNCTION__,__LINE__,##__VA_ARGS__);}\
+        printf("[Error] %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
 }while(0)
 
 #endif
