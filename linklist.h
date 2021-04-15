@@ -28,11 +28,12 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include "kernel_list.h"
 //client
 
 typedef struct client {
     int ID;
-    int connfd;
+    int confd;
     struct sockaddr_in addr;
 
     struct list_head list;

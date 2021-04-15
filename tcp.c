@@ -1,13 +1,15 @@
-#include<stdio.h>
-#include<sys/socket.h>
-#include<sys/types.h>
-#include<string.h>
-#include<unistd.h>
-#include<netinet/in.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <string.h>
+#include <unistd.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include "linklist.h"
+#include "typedef.h"
 #define LINE     10
 #define DEBUG    1
+#define DEBUG_LEVEL 3
 
 int main()
 {
@@ -20,9 +22,7 @@ int main()
 		return -1;
 	}
 
-#if DEBUG
-	printf("socket ok!\n");
-#endif
+	LOGD("socket ok!\n");
 
 	//通过调用bind绑定IP地址和端口号
 	int ret=0;
@@ -41,9 +41,7 @@ int main()
 		return -1;
 	}
 
-#if DEBUG
-	printf("bind success\n");
-#endif
+	LOGD("bind success\n");
 
 	//通过调用listen将套接字设置为监听模式
 	int lis=0;
@@ -55,24 +53,93 @@ int main()
 		return -1;
 	}
 
-#if DEBUG
-	printf("listen success\n");
-#endif
+	LOGD("listen success\n");
 
+    //creat list
+    linklist head = init_list();
+    
 	//服务器等待客户端连接中，游客户端连接时调用accept产生一个新的套接字
-	int confd=0;
 	socklen_t addrlen;
 	struct sockaddr_in clientaddr={0};
 	addrlen=sizeof(clientaddr);
-	confd=accept(serfd,(struct sockaddr *)&clientaddr,&addrlen);
-	if(confd<0)
-	{
-		perror("accept failed");
-		close(serfd);
-		return -1;
-	}
-	printf("connect success!\n");
-	printf("ip=%s,port=%u\n",inet_ntoa(clientaddr.sin_addr),ntohs(clientaddr.sin_port));
+
+    //create fd_set
+    fd_set rset;
+    int maxfd = serfd;
+
+    while(1) {
+        //bzero 
+        FD_ZERO(&rset);
+
+        //add listen fd
+        FD_SET(serfd,&rset);
+
+        //queue list, add all fd into set
+        struct list_head *pos;
+        linklist p;
+        list_for_each(pos,&head->list) {
+            p = list_entry(pos, listnode, list);
+            FD_SET(p->confd,&rset);
+
+            maxfd = maxfd > p->confd ? maxfd : p->confd;
+        }
+
+        //select for wait fd respond
+        select(maxfd+1, &rset, NULL, NULL, NULL);
+
+        //if new connect msg
+        if (FD_ISSET(serfd, &rset)) {
+            bzero(&clientaddr, addrlen);
+        	int confd=accept(serfd,(struct sockaddr *)&clientaddr,&addrlen);
+
+	        if(confd<0)
+	        {
+		        perror("accept failed");
+		        close(serfd);
+		        return -1;
+	        }
+
+            LOGD("new connect [%s:%hu]!\n", inet_ntoa(clientaddr.sin_addr),
+                                          ntohs(clientaddr.sin_port));
+            //creat id for new user
+            int newID = rand() % 10000;
+            char ID[6];
+            snprintf(ID,6, "ID:%d", newID);
+            write(confd, ID, strlen(ID));
+
+            listnode *new_cli = new_client(newID, confd, clientaddr);
+            if(new_cli == NULL) {
+                LOGD("new user create fail\n");
+            } else {
+                printf("new user create success\n");
+                LOGI("[%s:%hu]\n", inet_ntoa(new_cli->addr.sin_addr), ntohs(new_cli->addr.sin_port));
+                list_add_tail(&new_cli->list, &head->list);
+            }
+        }
+
+        struct list_head *q;
+        list_for_each_safe(pos,q,&head->list) {
+            p=list_entry(pos, listnode, list);
+
+            if (FD_ISSET(p->confd, &rset)) {
+                char msg[100];
+                int n;
+                bzero(msg, 100);
+                n = read(p->confd, msg, 100);
+
+                if(n == 0) {
+                    LOGD("[%s:%hu] is disconnect\n", inet_ntoa(p->addr.sin_addr), ntohs(p->addr.sin_port));
+                    list_del(pos);
+                    free(p);
+                    break;
+                } else {
+                    printf("msg:%s\n", msg);
+                }
+            }
+        }
+    }
+
+    /*
 	//调用recv接收客户端的消息
 	while(1)
 	{
@@ -97,7 +164,7 @@ int main()
 		}
 		printf("send success\n");
 	}
-	close(confd);
+    */
 	close(serfd);
 	
 	return 0;

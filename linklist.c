@@ -6,7 +6,7 @@ typedef struct client {
     int ID;
     int connfd;
     struct sockaddr_in addr;
-
+    
     struct list_head list;
 
 }listnode, *linklist;
@@ -28,7 +28,7 @@ linklist new_client(int ID, int fd, struct sockaddr_in addr) {
     }
     else {
         new_cli->ID = ID;
-        new_cli->connfd = fd;
+        new_cli->confd = fd;
         new_cli->addr = addr;
 
         INIT_LIST_HEAD(&new_cli->list);
