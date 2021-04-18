@@ -7,9 +7,10 @@
 #include <arpa/inet.h>
 #include "linklist.h"
 #include "typedef.h"
+
+#include "Msg_handler.h"
 #define LINE     10
 #define DEBUG    1
-#define DEBUG_LEVEL 3
 
 int main()
 {
@@ -33,6 +34,11 @@ int main()
 	//seraddr.sin_addr.s_addr=inet_addr("150.109.115.216");
 	//seraddr.sin_addr.s_addr=inet_addr("172.0.0.1");
 	seraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    int on = 1;
+    if(setsockopt(serfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int)) < 0)
+        LOGE("setsockopt");
+
 	ret=bind(serfd,(struct sockaddr *)&seraddr,sizeof(seraddr));
 	if(ret<0)
 	{
@@ -66,6 +72,9 @@ int main()
     //create fd_set
     fd_set rset;
     int maxfd = serfd;
+
+    net_message_t *srcNetMsg;
+    srcNetMsg = (net_message_t *)calloc(1,NET_MESSAGE_MAX_LENGTH);
 
     while(1) {
         //bzero 
@@ -103,15 +112,13 @@ int main()
                                           ntohs(clientaddr.sin_port));
             //creat id for new user
             int newID = rand() % 10000;
-            char ID[6];
-            snprintf(ID,6, "ID:%d", newID);
-            write(confd, ID, strlen(ID));
+            LOGD("newID:%d\n", newID);
+            netsendMsgUsrID(confd, newID);
 
             listnode *new_cli = new_client(newID, confd, clientaddr);
             if(new_cli == NULL) {
                 LOGD("new user create fail\n");
             } else {
-                printf("new user create success\n");
                 LOGI("[%s:%hu]\n", inet_ntoa(new_cli->addr.sin_addr), ntohs(new_cli->addr.sin_port));
                 list_add_tail(&new_cli->list, &head->list);
             }
@@ -133,7 +140,16 @@ int main()
                     free(p);
                     break;
                 } else {
-                    printf("msg:%s\n", msg);
+                    LOGD("msg comming!!!\n");
+                    memset(srcNetMsg,0,NET_MESSAGE_MAX_LENGTH);
+                    netparseMsg(srcNetMsg, msg);
+                    //nethandlerMsg(srcNetMsg);
+                    if (srcNetMsg->enOpcode == 0x79) {
+                        strcpy(p->usrname, srcNetMsg->body);
+                        LOGI("%s join!!\n", p->usrname);
+                    }else{
+                        LOGI("msg:%s\n", srcNetMsg->body);
+                    }
                 }
             }
         }

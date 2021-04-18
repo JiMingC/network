@@ -31,9 +31,12 @@
 #include "kernel_list.h"
 //client
 
+#define NAME_LEN_MAX 32
+
 typedef struct client {
     int ID;
     int confd;
+    char usrname[NAME_LEN_MAX];
     struct sockaddr_in addr;
 
     struct list_head list;

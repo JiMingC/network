@@ -7,18 +7,18 @@
 #define DEBUG_OUTPUT     1
 #define ERROR_OUTPUT     0
 
-//#define DEBUG_LEVEL      DEBUG_OUTPUT
+#define DEBUG_LEVEL     INFO_OUTPUT 
 //需在使用以下打印宏的.c文件中定义“DEBUG_LEVEL”变量
 #define LOGI(info,...)  \
 do{ \
     if(DEBUG_LEVEL>=INFO_OUTPUT){\
-        printf("[Info] %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
+        printf("[Info]  %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
 }while(0)
 
 #define LOGW(info,...)  \
 do{ \
     if(DEBUG_LEVEL>=WARNING_OUTPUT){\
-        printf("[Warning] %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
+        printf("[Warn]  %s,%d:"info"",__FUNCTION__,__LINE__,##__VA_ARGS__);}\
 }while(0)
 
 #define LOGD(info,...)  \
